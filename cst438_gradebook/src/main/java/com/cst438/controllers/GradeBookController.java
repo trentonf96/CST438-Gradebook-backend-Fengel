@@ -1,12 +1,15 @@
 package com.cst438.controllers;
 
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -124,6 +127,28 @@ public class GradeBookController {
 		registrationService.sendFinalGrades(course_id, cdto);
 	}
 	
+	@PostMapping("/assignment/{course_id}")
+   @Transactional
+   public Assignment addAssignment (@RequestBody Assignment assignment, @PathVariable int course_id) {
+	   Assignment newAssignment = new Assignment();
+	   String email = "dwisneski@csumb.edu";
+	   
+	   Course c = courseRepository.findById(course_id).orElse(null);
+      if (!c.getInstructor().equals(email)) {
+         throw new ResponseStatusException( HttpStatus.UNAUTHORIZED, "Not Authorized. " );
+      }
+	   
+      if (c != null) {
+         newAssignment.setName(assignment.getName());
+         newAssignment.setDueDate(assignment.getDueDate());
+         newAssignment.setNeedsGrading(0);
+         newAssignment.setCourse(c);
+         return assignmentRepository.save(newAssignment);
+      } else {
+         throw new ResponseStatusException( HttpStatus.BAD_REQUEST, "Bad Request" );
+      }
+   }
+	
 	private String letterGrade(double grade) {
 		if (grade >= 90) return "A";
 		if (grade >= 80) return "B";
@@ -154,6 +179,33 @@ public class GradeBookController {
 			assignmentGradeRepository.save(ag);
 		}
 		
+	}
+	
+	@PutMapping("assignment/{id}")
+	@Transactional
+	public Assignment updateAssignmentName (@RequestBody Assignment newAssignment, @PathVariable("id") Integer assignmentId) {
+	   return assignmentRepository.findById(assignmentId)
+            .map(assignment -> {
+                assignment.setName(newAssignment.getName());
+                return assignmentRepository.save(assignment);
+            })
+            .orElseGet(() -> {
+                return assignmentRepository.save(newAssignment);
+            });
+	}
+	
+	@DeleteMapping("/assignment/{id}")
+	@Transactional
+	public void deleteAssignment(@PathVariable("id") Integer assignmentId) {
+	   Assignment assignment = assignmentRepository.findById(assignmentId).orElse(null);
+	   int notGraded = assignment.getNeedsGrading();
+	   
+	   if (assignment != null && notGraded == 0) {
+	      assignmentRepository.deleteById(assignmentId);
+	   } else {
+	      throw new ResponseStatusException( HttpStatus.BAD_REQUEST, "Bad Request" );
+	   }
+	   
 	}
 	
 	private Assignment checkAssignment(int assignmentId, String email) {
