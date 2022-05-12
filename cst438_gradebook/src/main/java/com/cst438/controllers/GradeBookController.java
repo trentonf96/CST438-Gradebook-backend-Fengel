@@ -127,24 +127,28 @@ public class GradeBookController {
 		registrationService.sendFinalGrades(course_id, cdto);
 	}
 	
-	@PostMapping("/assignment/{course_id}")
+   @SuppressWarnings("unused")
+   @PostMapping("/assignment/{course_id}")
    @Transactional
-   public Assignment addAssignment (@RequestBody Assignment assignment, @PathVariable int course_id) {
-	   Assignment newAssignment = new Assignment();
-	   String email = "dwisneski@csumb.edu";
-	   
-	   Course c = courseRepository.findById(course_id).orElse(null);
+   public AssignmentListDTO.AssignmentDTO addAssignment (@RequestBody AssignmentListDTO.AssignmentDTO assignDTO, @PathVariable int course_id) {
+      Assignment newAssignment = new Assignment();
+      String email = "dwisneski@csumb.edu";
+      
+      Course c = courseRepository.findById(course_id).orElse(null);
       if (!c.getInstructor().equals(email)) {
          throw new ResponseStatusException( HttpStatus.UNAUTHORIZED, "Not Authorized. " );
       }
-	   
+      
       if (c != null) {
-         newAssignment.setName(assignment.getName());
-         newAssignment.setDueDate(assignment.getDueDate());
+         newAssignment.setName(assignDTO.assignmentName);
+         newAssignment.setDueDate(Date.valueOf(assignDTO.dueDate));
          newAssignment.setNeedsGrading(0);
          newAssignment.setCourse(c);
-         return assignmentRepository.save(newAssignment);
-      } else {
+         Assignment saved = assignmentRepository.save(newAssignment);
+         assignDTO.assignmentId = saved.getId();
+         return assignDTO;
+      } 
+      else {
          throw new ResponseStatusException( HttpStatus.BAD_REQUEST, "Bad Request" );
       }
    }
@@ -182,17 +186,15 @@ public class GradeBookController {
 	}
 	
 	@PutMapping("assignment/{id}")
-	@Transactional
-	public Assignment updateAssignmentName (@RequestBody Assignment newAssignment, @PathVariable("id") Integer assignmentId) {
-	   return assignmentRepository.findById(assignmentId)
-            .map(assignment -> {
-                assignment.setName(newAssignment.getName());
-                return assignmentRepository.save(assignment);
-            })
-            .orElseGet(() -> {
-                return assignmentRepository.save(newAssignment);
-            });
-	}
+   @Transactional
+   public AssignmentListDTO.AssignmentDTO updateAssignmentName (@RequestBody AssignmentListDTO.AssignmentDTO newAssignment, @PathVariable("id") Integer assignmentId) {
+      Assignment assignment = assignmentRepository.findById(assignmentId).orElse(null);
+      assignment.setName(newAssignment.assignmentName);
+      Assignment saved = assignmentRepository.save(assignment);
+      newAssignment.assignmentId = saved.getId();
+      return newAssignment;
+
+   }
 	
 	@DeleteMapping("/assignment/{id}")
 	@Transactional
@@ -201,9 +203,9 @@ public class GradeBookController {
 	   int notGraded = assignment.getNeedsGrading();
 	   
 	   if (assignment != null && notGraded == 0) {
-	      assignmentRepository.deleteById(assignmentId);
+	      assignmentRepository.delete(assignment);
 	   } else {
-	      throw new ResponseStatusException( HttpStatus.BAD_REQUEST, "Bad Request" );
+	      throw new ResponseStatusException( HttpStatus.BAD_REQUEST, "Assignment doesn't exist or has already been graded." );
 	   }
 	   
 	}
