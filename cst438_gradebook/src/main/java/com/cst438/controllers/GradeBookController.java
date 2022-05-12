@@ -1,12 +1,15 @@
 package com.cst438.controllers;
 
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -124,6 +127,32 @@ public class GradeBookController {
 		registrationService.sendFinalGrades(course_id, cdto);
 	}
 	
+   @SuppressWarnings("unused")
+   @PostMapping("/assignment/{course_id}")
+   @Transactional
+   public AssignmentListDTO.AssignmentDTO addAssignment (@RequestBody AssignmentListDTO.AssignmentDTO assignDTO, @PathVariable int course_id) {
+      Assignment newAssignment = new Assignment();
+      String email = "dwisneski@csumb.edu";
+      
+      Course c = courseRepository.findById(course_id).orElse(null);
+      if (!c.getInstructor().equals(email)) {
+         throw new ResponseStatusException( HttpStatus.UNAUTHORIZED, "Not Authorized. " );
+      }
+      
+      if (c != null) {
+         newAssignment.setName(assignDTO.assignmentName);
+         newAssignment.setDueDate(Date.valueOf(assignDTO.dueDate));
+         newAssignment.setNeedsGrading(0);
+         newAssignment.setCourse(c);
+         Assignment saved = assignmentRepository.save(newAssignment);
+         assignDTO.assignmentId = saved.getId();
+         return assignDTO;
+      } 
+      else {
+         throw new ResponseStatusException( HttpStatus.BAD_REQUEST, "Bad Request" );
+      }
+   }
+	
 	private String letterGrade(double grade) {
 		if (grade >= 90) return "A";
 		if (grade >= 80) return "B";
@@ -154,6 +183,31 @@ public class GradeBookController {
 			assignmentGradeRepository.save(ag);
 		}
 		
+	}
+	
+	@PutMapping("assignment/{id}")
+   @Transactional
+   public AssignmentListDTO.AssignmentDTO updateAssignmentName (@RequestBody AssignmentListDTO.AssignmentDTO newAssignment, @PathVariable("id") Integer assignmentId) {
+      Assignment assignment = assignmentRepository.findById(assignmentId).orElse(null);
+      assignment.setName(newAssignment.assignmentName);
+      Assignment saved = assignmentRepository.save(assignment);
+      newAssignment.assignmentId = saved.getId();
+      return newAssignment;
+
+   }
+	
+	@DeleteMapping("/assignment/{id}")
+	@Transactional
+	public void deleteAssignment(@PathVariable("id") Integer assignmentId) {
+	   Assignment assignment = assignmentRepository.findById(assignmentId).orElse(null);
+	   int notGraded = assignment.getNeedsGrading();
+	   
+	   if (assignment != null && notGraded == 0) {
+	      assignmentRepository.delete(assignment);
+	   } else {
+	      throw new ResponseStatusException( HttpStatus.BAD_REQUEST, "Assignment doesn't exist or has already been graded." );
+	   }
+	   
 	}
 	
 	private Assignment checkAssignment(int assignmentId, String email) {
