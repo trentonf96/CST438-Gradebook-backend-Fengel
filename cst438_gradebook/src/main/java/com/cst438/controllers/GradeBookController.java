@@ -200,12 +200,11 @@ public class GradeBookController {
 	@Transactional
 	public void deleteAssignment(@PathVariable("id") Integer assignmentId) {
 	   Assignment assignment = assignmentRepository.findById(assignmentId).orElse(null);
-	   int notGraded = assignment.getNeedsGrading();
-	   
 	   boolean gradeExists = false;
 	   GradebookDTO gradebook = new GradebookDTO();
       gradebook.assignmentId= assignmentId;
       gradebook.assignmentName = assignment.getName();
+      
       for (Enrollment e : assignment.getCourse().getEnrollments()) {
          GradebookDTO.Grade grade = new GradebookDTO.Grade();
          grade.name = e.getStudentName();
@@ -219,11 +218,8 @@ public class GradeBookController {
          }
       }
 	   
-	   
-	   
-	   
 	   if (assignment != null && gradeExists == false) {
-	      assignmentRepository.deleteById(assignmentId);
+	      assignmentRepository.delete(assignment);
 	   } else {
 	      throw new ResponseStatusException( HttpStatus.BAD_REQUEST, "Assignment doesn't exist or has already been graded." );
 	   }
