@@ -142,7 +142,7 @@ public class GradeBookController {
       if (c != null) {
          newAssignment.setName(assignDTO.assignmentName);
          newAssignment.setDueDate(Date.valueOf(assignDTO.dueDate));
-         newAssignment.setNeedsGrading(0);
+         newAssignment.setNeedsGrading(1);
          newAssignment.setCourse(c);
          Assignment saved = assignmentRepository.save(newAssignment);
          assignDTO.assignmentId = saved.getId();
