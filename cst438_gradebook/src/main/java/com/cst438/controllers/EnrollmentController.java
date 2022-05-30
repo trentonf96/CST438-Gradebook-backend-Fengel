@@ -28,13 +28,24 @@ public class EnrollmentController {
 	 * course.
 	 */
 	@PostMapping("/enrollment")
-	@Transactional
-	public EnrollmentDTO addEnrollment(@RequestBody EnrollmentDTO enrollmentDTO) {
-		
-		//TODO  complete this method in homework 4
-		
-		return null;
-		
-	}
+   @Transactional
+   public EnrollmentDTO addEnrollment(@RequestBody EnrollmentDTO enrollmentDTO) {
+      
+      System.out.println("Gradebook received enrollment for: "+enrollmentDTO.studentName);
+      Course c = courseRepository.findById(enrollmentDTO.course_id).orElse(null);
+      if(c == null){
+         throw new ResponseStatusException( HttpStatus.BAD_REQUEST, "course_id doesn't exist");
+      }
+
+      Enrollment enrollment = new Enrollment();
+      enrollment.setStudentName(enrollmentDTO.studentName);
+      enrollment.setStudentEmail(enrollmentDTO.studentEmail);
+      enrollment.setCourse(c);
+      Enrollment result = enrollmentRepository.save(enrollment);
+      enrollmentDTO.id = result.getId();
+      // return updated enrollment with id
+      return enrollmentDTO;
+      
+   }
 
 }
