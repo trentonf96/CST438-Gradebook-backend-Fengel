@@ -9,9 +9,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.interactions.Actions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -41,7 +43,7 @@ public class EndToEndTestSubmitGrades {
 
 	public static final String CHROME_DRIVER_FILE_LOCATION = "C:/chromedriver_win32/chromedriver.exe";
 
-	public static final String URL = "http://localhost:3000";
+	public static final String URL = "https://cst438gradebook-fe.herokuapp.com/";
 	public static final String TEST_USER_EMAIL = "test@csumb.edu";
 	public static final String TEST_INSTRUCTOR_EMAIL = "dwisneski@csumb.edu";
 	public static final int SLEEP_DURATION = 1000; // 1 second.
@@ -60,6 +62,7 @@ public class EndToEndTestSubmitGrades {
 
 	@Test
 	public void addCourseTest() throws Exception {
+	   
 
 //		Database setup:  create course		
 		Course c = new Course();
@@ -101,31 +104,39 @@ public class EndToEndTestSubmitGrades {
 		WebDriver driver = new ChromeDriver();
 		// Puts an Implicit wait for 10 seconds before throwing exception
 		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-
+		Actions act = new Actions(driver);
 		driver.get(URL);
 		Thread.sleep(SLEEP_DURATION);
-
+		
 		try {
 			// locate input element for assignment for 'Test Course'
-			WebElement we = driver.findElement(By.xpath("//div[@data-value='TEST ASSIGNMENT']//input"));
+			WebElement we = driver.findElement(By.xpath("(//input[@type='radio'])[last()]"));
 		 	we.click();
+		 	Thread.sleep(SLEEP_DURATION);
 
 			// Locate and click Go button
-			driver.findElement(By.xpath("//a")).click();
+		 	driver.findElement(By.xpath("//a")).click();
 			Thread.sleep(SLEEP_DURATION);
-
+			
 			// Locate row for student name "Test" and enter score of "99.9" into the grade field
-			we = driver.findElement(By.xpath("//div[@data-field='name' and @data-value='Test']"));
-			we.findElement(By.xpath("following-sibling::div[@data-field='grade']")).sendKeys("99.9");
+			we = driver.findElement(By.xpath("//div[@data-field='name']/div[text()='Test']/parent::div"));
+			we = we.findElement(By.xpath("following-sibling::div[@data-field='grade']"));
+			act.doubleClick(we).perform();
+			Thread.sleep(SLEEP_DURATION);
+			driver.switchTo().activeElement().sendKeys("99.9");
+			Thread.sleep(SLEEP_DURATION);
+			driver.switchTo().activeElement().sendKeys(Keys.RETURN);
+         Thread.sleep(SLEEP_DURATION);
 
 			// Locate submit button and click
-			driver.findElement(By.xpath("//button[span='Submit']")).click();
+			we = driver.findElement(By.xpath("//button[@id='submit']/span"));
+			act.moveToElement(we).click(we).perform();
 			Thread.sleep(SLEEP_DURATION);
 
 			// verify that score show up
-			 we = driver.findElement(By.xpath("//div[@data-field='name' and @data-value='Test']"));
-			 we =  we.findElement(By.xpath("following-sibling::div[@data-field='grade']"));
-			assertEquals("99.9", we.getAttribute("data-value"));
+			we = driver.findElement(By.xpath("//div[@data-field='name']/div[text()='Test']/parent::div"));
+			we =  we.findElement(By.xpath("following-sibling::div[@data-field='grade']/div"));
+			assertEquals("99.9", we.getText());
 
 			// verify that assignment_grade has been added to database with score of 99.9
 			ag = assignnmentGradeRepository.findByAssignmentIdAndStudentEmail(a.getId(), TEST_USER_EMAIL);
@@ -144,6 +155,5 @@ public class EndToEndTestSubmitGrades {
 
 			driver.quit();
 		}
-
 	}
 }
