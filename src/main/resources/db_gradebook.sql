@@ -14,10 +14,8 @@ CREATE TABLE `course` (
 );
 
 insert into course values(123456, 'dwisneski@csumb.edu', 'fall', 'cst438-software engineering', 2021);
-insert into course values(999001, 'dwisneski@csumb.edu', 'fall', 'cst363-database', 2021);
-insert into course values(30157, 'dwisneski@csumb.edu', 'fall', 'hello', 2021);
-insert into course values(40443, 'dwisneski@csumb.edu', 'fall', 'hello', 2021);
-
+insert into course values(123123, 'dwisneski@csumb.edu', 'fall', 'cst363-database', 2021);
+insert into course values(999001, 'tfengel@csumb.edu', 'fall', 'cst363-database', 2021);
 
 DROP TABLE IF EXISTS `enrollment`;
 CREATE TABLE `enrollment` (
@@ -34,7 +32,6 @@ insert into enrollment values(null, 'student1@csumb.edu', 'Student One', 123456)
 insert into enrollment values(null, 'student2@csumb.edu', 'Student Two', 123456);
 insert into enrollment values(null, 'student1@csumb.edu', 'Student One', 999001);
 insert into enrollment values(null, 'student3@csumb.edu', 'Student Three', 999001);
-insert into enrollment values(null, 'test@csumb.edu', 'Student Test', 40443);
 
 DROP TABLE IF EXISTS `assignment`;
 CREATE TABLE `assignment` (
@@ -50,7 +47,6 @@ CREATE TABLE `assignment` (
 
 insert into assignment values(null, '2021-09-01', 'a1 - db design', 1, 999001);
 insert into assignment values(null, '2021-09-02', 'hw1 - requirements', 1, 123456);
-insert into assignment values(null, '2021-09-02', 'test_assignment', 1, 40443);
 
 DROP TABLE IF EXISTS `assignment_grade`;
 CREATE TABLE `assignment_grade` (
@@ -64,5 +60,3 @@ CREATE TABLE `assignment_grade` (
   CONSTRAINT `FKaxh9254n4nfmxxxovn8g591y7` FOREIGN KEY (`enrollment_id`) REFERENCES `enrollment` (`id`),
   CONSTRAINT `FKph33axj4dnucgpe69qif06dlj` FOREIGN KEY (`assignment_id`) REFERENCES `assignment` (`id`)
 );
-
-insert into assignment_grade values(null, '80', 3, 5);
